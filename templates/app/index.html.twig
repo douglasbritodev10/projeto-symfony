@@ -1,20 +1,114 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello AppController!{% endblock %}
+{% block title %}Início - MS Code Estoque{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+    {{ include('_navbar.html.twig') }}
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+    <div class="container py-4">
+        <div class="mb-4">
+            <h1 class="h3 mb-0">Controle Rápido de Estoque</h1>
+            <p class="text-muted small mb-0">Visualize os produtos, suas categorias e ajuste o estoque na hora</p>
+        </div>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>/home/alunosms/projeto-symfony/src/Controller/AppController.php</code></li>
-        <li>Your template at <code>/home/alunosms/projeto-symfony/templates/app/index.html.twig</code></li>
-    </ul>
-</div>
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Produto</th>
+                                <th>Categoria</th>
+                                <th class="text-center">Estoque Atual</th>
+                                <th class="text-end pe-4">Ajustar Estoque</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for produto in produtos %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-semibold">{{ produto.nome }}</div>
+                                    {% if produto.descricao %}
+                                        <small class="text-muted">{{ produto.descricao }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if produto.categoria %}
+                                        <span class="badge bg-secondary-subtle text-secondary-emphasis border">
+                                            {{ produto.categoria.nome }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning-subtle text-warning-emphasis">Sem categoria</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge {{ produto.estoque > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }} fs-6 px-3 py-2">
+                                        {{ produto.estoque }}
+                                    </span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-inline-flex align-items-center justify-content-end gap-2">
+                                        {# Formulário de Diminuir / Dar Baixa #}
+                                        <form method="post" action="{{ path('app_estoque_diminuir', {'id': produto.id}) }}" class="d-inline-flex align-items-center gap-1">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('diminuir' ~ produto.id) }}">
+                                            <input
+                                                type="number"
+                                                name="quantidade"
+                                                value="1"
+                                                min="1"
+                                                max="{{ produto.estoque > 0 ? produto.estoque : 1 }}"
+                                                class="form-control form-control-sm text-center"
+                                                style="width: 72px;"
+                                                aria-label="Quantidade para diminuir"
+                                                {{ produto.estoque <= 0 ? 'disabled' : '' }}
+                                                required
+                                            >
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Dar baixa no estoque" {{ produto.estoque <= 0 ? 'disabled' : '' }}>
+                                                <i class="bi bi-dash-lg"></i> Baixar
+                                            </button>
+                                        </form>
+
+                                        {# Formulário de Aumentar #}
+                                        <form method="post" action="{{ path('app_estoque_aumentar', {'id': produto.id}) }}" class="d-inline-flex align-items-center gap-1">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('aumentar' ~ produto.id) }}">
+                                            <input
+                                                type="number"
+                                                name="quantidade"
+                                                value="1"
+                                                min="1"
+                                                class="form-control form-control-sm text-center"
+                                                style="width: 72px;"
+                                                aria-label="Quantidade para aumentar"
+                                                required
+                                            >
+                                            <button type="submit" class="btn btn-sm btn-success" title="Adicionar ao estoque">
+                                                <i class="bi bi-plus-lg"></i> Adicionar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="bi bi-box-seam fs-1 d-block mb-2"></i>
+                                    Nenhum produto cadastrado no momento.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
